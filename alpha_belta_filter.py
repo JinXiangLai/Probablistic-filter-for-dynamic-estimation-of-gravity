@@ -4,7 +4,7 @@ import math
 _EPS = np.finfo(float).eps * 4.0
 
 data_folder = ''
-data_file_name = data_folder + 'vel_imu_data.csv'
+data_file_name = data_folder + 'vel_imu_simulate.csv'
 
 
 def str_list2float_list(all_data):
@@ -127,9 +127,10 @@ def main():
             v0 = v_k0
             R0 = R_k0
 
-            v_k0 = v_k0 + R_k0.dot(
-                acc) * delta_t + g_k0 * delta_t  # 时间差不为0,仍需要预测
-            v_z = np.array(data[1:4])  # 当前观测速度
+            if delta_t > 0:
+                v_k0 = v_k0 + R_k0.dot(
+                    acc) * delta_t + g_k0 * delta_t
+            v_z = np.array(data[1:4]) 
             diff = v_z - v_k0
             v_update = v_k0 + alpha * diff
 
