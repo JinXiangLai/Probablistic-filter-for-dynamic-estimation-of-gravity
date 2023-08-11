@@ -25,41 +25,9 @@ def content_vel_quat(t, v, quat) -> str:
 
 
 def quaternion_from_matrix(matrix, isprecise=False):
-    """Return quaternion from rotation matrix.
-
-    If isprecise is True, the input matrix is assumed to be a precise rotation
-    matrix and a faster algorithm is used.
-
-    >>> q = quaternion_from_matrix(numpy.identity(4), True)
-    >>> numpy.allclose(q, [1, 0, 0, 0])
-    True
-    >>> q = quaternion_from_matrix(numpy.diag([1, -1, -1, 1]))
-    >>> numpy.allclose(q, [0, 1, 0, 0]) or numpy.allclose(q, [0, -1, 0, 0])
-    True
-    >>> R = rotation_matrix(0.123, (1, 2, 3))
-    >>> q = quaternion_from_matrix(R, True)
-    >>> numpy.allclose(q, [0.9981095, 0.0164262, 0.0328524, 0.0492786])
-    True
-    >>> R = [[-0.545, 0.797, 0.260, 0], [0.733, 0.603, -0.313, 0],
-    ...      [-0.407, 0.021, -0.913, 0], [0, 0, 0, 1]]
-    >>> q = quaternion_from_matrix(R)
-    >>> numpy.allclose(q, [0.19069, 0.43736, 0.87485, -0.083611])
-    True
-    >>> R = [[0.395, 0.362, 0.843, 0], [-0.626, 0.796, -0.056, 0],
-    ...      [-0.677, -0.498, 0.529, 0], [0, 0, 0, 1]]
-    >>> q = quaternion_from_matrix(R)
-    >>> numpy.allclose(q, [0.82336615, -0.13610694, 0.46344705, -0.29792603])
-    True
-    >>> R = random_rotation_matrix()
-    >>> q = quaternion_from_matrix(R)
-    >>> is_same_transform(R, quaternion_matrix(q))
-    True
-    >>> R = euler_matrix(0.0, 0.0, numpy.pi/2.0)
-    >>> numpy.allclose(quaternion_from_matrix(R, isprecise=False),
-    ...                quaternion_from_matrix(R, isprecise=True))
-    True
-
-    """
+    '''
+        return [qx, qy, qz, qw]
+    '''
     M = np.array(matrix, dtype=np.float64, copy=False)[:4, :4]
     if isprecise:
         q = np.empty((4, ))
@@ -102,7 +70,6 @@ def quaternion_from_matrix(matrix, isprecise=False):
         q = V[[3, 0, 1, 2], np.argmax(w)]
     if q[0] < 0.0:
         np.negative(q, q)
-    # 这里的q是[qw, qx, qy, qz],将其转换为[qx, qy, qz, qw]
     q = np.array([q[1], q[2], q[3], q[0]], dtype=np.float64, copy=True)
     q = q/np.linalg.norm(q)
     return q
@@ -148,10 +115,10 @@ def calculate_vel_acc(v, q, gyro, acc, delta_t, g):
 
 
 def main():
-    # 宏参数
+    # Macro parameters
     sample_time = 0.01  # 10 ms
     vel = np.array([0., 0., 0.])
-    # 注意，四元素的形式
+
     quat = np.array([0., 0., 0., 1.])
     g = np.array([0, 0, -9.8])
     generate_data_num = 10000
@@ -160,20 +127,18 @@ def main():
     with open(data_file_name, 'w') as file:
         initial_content = '#' + 'type ' + 'timestamp ' + 'content\n'
         file.write(initial_content)
-        # 用于记录当要生成v, quat时，不再更新w, a
-        # 使得算出来的v,quat使用欧拉积分是正确的
         w = np.array([0., 0., 0.])
-        a = np.array([0., 0., -9.8])
+        a = -1.0 * g
         sample_freq = 3
         for i in range(generate_data_num):
             if i % sample_freq:
-                # 重新采样并写入文件
+                # sample data
                 w = generate_gyro_data()
                 a = generate_acc_data()
                 content = content_gyro_acc(timestamp, w, a)
                 file.write(content)
 
-            # 计算速度和旋转
+            # calculate velocity and rotation
             vel, quat = calculate_vel_acc(vel, quat, w, a, sample_time, g)
             if i % sample_freq == 0:
                 content = content_vel_quat(timestamp, vel, quat)
