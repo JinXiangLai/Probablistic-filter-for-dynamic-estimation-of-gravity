@@ -39,7 +39,7 @@ class KalmanFilter(object):
 
         # movement input covariance
         self.acc_noise_ = 0.1#0.1
-        self.gyro_noise_ = 0.001#0.01  # gyro 不直接影响状态量，所以这里不需要使用到
+        self.gyro_noise_ = 0.001#0.01 
         self.Q_ = np.eye(3)
         self.Q_ *= self.acc_noise_
 
